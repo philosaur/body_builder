@@ -5,30 +5,43 @@ public partial class Body : Node3D
 {
     [Export] public float CrossSectionRadius = 0.5f;
     [Export] public int CrossSectionPointCount = 5;
-    [Export] public Vector3[] CrossSectionScales = new Vector3[] 
-    {
-        new Vector3(0.10f, 0.10f, 0.50f),
-        new Vector3(0.40f, 0.70f, 0.50f),
-        new Vector3(0.50f, 0.80f, 0.50f),
-		new Vector3(0.50f, 0.80f, 0.50f),
-		new Vector3(0.50f, 0.70f, 0.50f),
-        new Vector3(0.40f, 0.60f, 0.50f),
-        new Vector3(0.30f, 0.50f, 0.50f),
-		new Vector3(0.20f, 0.30f, 0.50f),
-		new Vector3(0.10f, 0.10f, 0.50f)
-    };
-    [Export] public float Length = 2.0f;
-    [Export] public Color AlbedoColor = new Color(0.8f, 0.8f, 0.8f);
-    [Export] public float Roughness = 0.5f;
-    [Export] public float Metallic = 0.0f;
+    [Export] public int CrossSectionCount = 9;
+    [Export] public Vector3 BaseScale = new Vector3(0.5f, 0.8f, 0.5f);
+    [Export] public Vector3 Size = new Vector3(3.0f, 4.0f, 6.0f);
+    [Export] public Color AlbedoColor = new Color(1f, 1f, 1f);
+    [Export] public float Roughness = .75f;
+    [Export] public float Metallic = 0.4f;
 
     private Vector3 _primaryAnchor;
     private List<Vector3> _crossSectionPoints;
+    private MeshInstance3D _meshInstance;
+    private Vector3[] _crossSectionScales;
 
     public override void _Ready()
     {
+        _meshInstance = new MeshInstance3D();
+        AddChild(_meshInstance);
+        RegenerateGeometry();
+    }
+
+    public void RegenerateGeometry()
+    {
+        GenerateCrossSectionScales();
         GenerateCrossSection();
-        GenerateCube();
+        GenerateSkin();
+    }
+
+    private void GenerateCrossSectionScales()
+    {
+        _crossSectionScales = new Vector3[CrossSectionCount];
+        float step = 1.0f / (CrossSectionCount - 1);
+        
+        for (int i = 0; i < CrossSectionCount; i++)
+        {
+            float t = i * step;
+            float scale = Mathf.Sin(t * Mathf.Pi); // Smooth transition from 0 to 1 and back
+            _crossSectionScales[i] = BaseScale * scale;
+        }
     }
 
     private void GenerateCrossSection()
@@ -48,12 +61,8 @@ public partial class Body : Node3D
         }
     }
 
-    private void GenerateCube()
+    private void GenerateSkin()
     {
-        // Create a new MeshInstance3D
-        var meshInstance = new MeshInstance3D();
-        AddChild(meshInstance);
-
         // Create vertices for all cross-sections
         var vertices = new List<Vector3>();
         var indices = new List<int>();
@@ -61,34 +70,34 @@ public partial class Body : Node3D
 
         // Calculate total length scale for normalization
         float totalLengthScale = 0;
-        foreach (var scale in CrossSectionScales)
+        foreach (var scale in _crossSectionScales)
         {
             totalLengthScale += scale.Z;
         }
 
         // Generate vertices for each cross-section
-        int[] sectionStartIndices = new int[CrossSectionScales.Length];
-        float currentZ = Length / 2; // Start at front
+        int[] sectionStartIndices = new int[_crossSectionScales.Length];
+        float currentZ = Size.Z / 2; // Start at front
 
-        for (int section = 0; section < CrossSectionScales.Length; section++)
+        for (int section = 0; section < _crossSectionScales.Length; section++)
         {
             sectionStartIndices[section] = vertices.Count;
-            Vector3 scale = CrossSectionScales[section];
+            Vector3 scale = _crossSectionScales[section];
             
             foreach (var point in _crossSectionPoints)
             {
                 vertices.Add(new Vector3(
-                    point.X * scale.X,
-                    point.Y * scale.Y,
+                    point.X * scale.X * Size.X,
+                    point.Y * scale.Y * Size.Y,
                     currentZ
                 ));
                 normals.Add(Vector3.Forward); // Will be updated for side faces
             }
 
             // Update Z position for next section
-            if (section < CrossSectionScales.Length - 1)
+            if (section < _crossSectionScales.Length - 1)
             {
-                float sectionLength = (scale.Z / totalLengthScale) * Length;
+                float sectionLength = (scale.Z / totalLengthScale) * Size.Z;
                 currentZ -= sectionLength;
             }
         }
@@ -111,7 +120,7 @@ public partial class Body : Node3D
         }
 
         // Generate triangles for sides between each cross-section
-        for (int section = 0; section < CrossSectionScales.Length - 1; section++)
+        for (int section = 0; section < _crossSectionScales.Length - 1; section++)
         {
             int currentStart = sectionStartIndices[section];
             int nextStart = sectionStartIndices[section + 1];
@@ -149,25 +158,27 @@ public partial class Body : Node3D
             }
         }
 
+        // Create arrays for the mesh
+        var arrays = new Godot.Collections.Array();
+        arrays.Resize((int)Mesh.ArrayType.Max);
+        arrays[(int)Mesh.ArrayType.Vertex] = vertices.ToArray();
+        arrays[(int)Mesh.ArrayType.Index] = indices.ToArray();
+        arrays[(int)Mesh.ArrayType.Normal] = normals.ToArray();
+
         // Create the mesh
         var mesh = new ArrayMesh();
-        var arrays = new Godot.Collections.Array();
-        arrays.Resize((int)ArrayMesh.ArrayType.Max);
-        arrays[(int)ArrayMesh.ArrayType.Vertex] = vertices.ToArray();
-        arrays[(int)ArrayMesh.ArrayType.Normal] = normals.ToArray();
-        arrays[(int)ArrayMesh.ArrayType.Index] = indices.ToArray();
-
         mesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, arrays);
 
-        // Create and set the material
+        // Create material
         var material = new StandardMaterial3D
         {
             AlbedoColor = AlbedoColor,
             Roughness = Roughness,
             Metallic = Metallic
         };
-        mesh.SurfaceSetMaterial(0, material);
 
-        meshInstance.Mesh = mesh;
+        // Apply mesh and material
+        _meshInstance.Mesh = mesh;
+        _meshInstance.MaterialOverride = material;
     }
 }

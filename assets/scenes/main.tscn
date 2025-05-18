@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://de14l1f4uoas2"]
+[gd_scene load_steps=5 format=3 uid="uid://de14l1f4uoas2"]
 
 [ext_resource type="Script" path="res://assets/scripts/OrbitCamera.cs" id="1_17aat"]
 [ext_resource type="Script" path="res://assets/scripts/Body.cs" id="2_q4o7e"]
+[ext_resource type="Script" path="res://assets/scripts/UIController.cs" id="3_8k4m2"]
 
 [sub_resource type="CylinderMesh" id="CylinderMesh_70iu5"]
 top_radius = 1.0
@@ -17,16 +18,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
 script = ExtResource("1_17aat")
 Target = NodePath("../body_root")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.91046, 0.413597, 0, -0.413597, 0.91046, 0, 10.0131, 14.5488)
-light_color = Color(0.972549, 0.843137, 0.788235, 1)
-
-[node name="OmniLight3D" type="OmniLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.21787, -1.62, -6.5)
-light_color = Color(0.843715, 0.906461, 0.901974, 1)
-light_energy = 3.795
-omni_range = 9.9054
-
 [node name="body_root" type="Node3D" parent="."]
 script = ExtResource("2_q4o7e")
 
@@ -34,3 +25,95 @@ script = ExtResource("2_q4o7e")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.18696e-05, 0)
 visible = false
 mesh = SubResource("CylinderMesh_70iu5")
+
+[node name="UI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_8k4m2")
+BodyPath = NodePath("../body_root")
+
+[node name="ControlPanel" type="Panel" parent="UI"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -200.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 180.0
+grow_horizontal = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/ControlPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="UI/ControlPanel/VBoxContainer"]
+layout_mode = 2
+text = "Segments"
+
+[node name="HSlider" type="HSlider" parent="UI/ControlPanel/VBoxContainer"]
+layout_mode = 2
+min_value = 3.0
+max_value = 20.0
+value = 5.0
+
+[node name="ValueLabel" type="Label" parent="UI/ControlPanel/VBoxContainer"]
+layout_mode = 2
+text = "5"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="UI/ControlPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Label2" type="Label" parent="UI/ControlPanel/VBoxContainer"]
+layout_mode = 2
+text = "Cross Sections"
+
+[node name="HSlider2" type="HSlider" parent="UI/ControlPanel/VBoxContainer"]
+layout_mode = 2
+min_value = 3.0
+max_value = 20.0
+value = 9.0
+
+[node name="ValueLabel2" type="Label" parent="UI/ControlPanel/VBoxContainer"]
+layout_mode = 2
+text = "9"
+horizontal_alignment = 1
+
+[node name="lights" type="Node3D" parent="."]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="lights"]
+transform = Transform3D(1, 0, 0, 0, 0.91046, 0.413597, 0, -0.413597, 0.91046, 0, 10.0131, 14.5488)
+light_color = Color(0.972549, 0.843137, 0.788235, 1)
+light_energy = 1.537
+
+[node name="OmniLight3D" type="OmniLight3D" parent="lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.21787, -7.7767, -2.4358)
+light_color = Color(0.843715, 0.906461, 0.901974, 1)
+light_energy = 3.795
+omni_range = 10.0948
+
+[node name="OmniLight3D2" type="OmniLight3D" parent="lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.56227, -0.284677, 1.76991)
+light_color = Color(0.941176, 0.956863, 0.909804, 1)
+light_energy = 3.094
+omni_range = 10.1229
+
+[node name="OmniLight3D3" type="OmniLight3D" parent="lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.43852, -3.2068, 6.14243)
+light_color = Color(0.858824, 0.882353, 0.984314, 1)
+light_energy = 1.376
+omni_range = 10.1094
