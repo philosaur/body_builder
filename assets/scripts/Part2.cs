@@ -1,5 +1,19 @@
 using Godot;
 using System.Collections.Generic;
+using System.Runtime;
+
+
+public struct Section {
+	public float xScale;
+	public float yScale;
+	public float extension;
+
+	public Section(float xScale, float yScale, float extension) {
+		this.xScale = xScale;
+		this.yScale = yScale;
+		this.extension = extension;
+	}
+}
 
 public partial class Part2 : Node3D {
 	
@@ -9,6 +23,13 @@ public partial class Part2 : Node3D {
     [Export] public float Roughness = .75f;
     [Export] public float Metallic = 0.4f;
     [Export] public float NormalDebugLength = 0.2f; // Length of normal debug lines
+
+	public Section[] sections = new Section[] {
+		new Section(1, 1, 0.50f),
+		new Section(1, 1, 0.50f),
+		new Section(1, 1, 0.50f),
+		new Section(1, 1, 0.50f)
+	};
     
     private MeshInstance3D _meshInstance;
     private MeshInstance3D _normalDebugMesh;
@@ -25,38 +46,41 @@ public partial class Part2 : Node3D {
 
 
 
-		// create front faces
+		// create angle array
+		float[] angles = new float[radialSegments];
+		for (int i = 0; i < radialSegments; i++) {
+			angles[i] = Mathf.Pi * 2 / radialSegments * i;
+		}		
 		float angle = Mathf.Pi * 2 / radialSegments;
 		float radius = 1f;
-		float extension = .5f;
 		float totalExtension = 0;
 
 		// ********************************************
-		// create front face/cone
-		// ********************************************
-
-		// decrement totalExtension
-		totalExtension -= extension;
+		// create front cap
+		// ********************************************		
 		for (int i = 0; i < radialSegments; i++) {
 			createVertex(0, 0, 0);
 			createVertex(
-				Mathf.Cos(angle * (i + 1)) * radius, 
-				Mathf.Sin(angle * (i + 1)) * radius, 
-				totalExtension
+				Mathf.Cos(angle * (i + 1)) * sections[0].xScale, 
+				Mathf.Sin(angle * (i + 1)) * sections[0].yScale, 
+				-sections[0].extension
 			);
 			createVertex(
-				Mathf.Cos(angle * i) * radius, 
-				Mathf.Sin(angle * i) * radius, 
-				totalExtension
+				Mathf.Cos(angle * i) * sections[0].xScale, 
+				Mathf.Sin(angle * i) * sections[0].yScale, 
+				-sections[0].extension
 			);
 		}
+		totalExtension -= sections[0].extension;
 
 
 		// ********************************************
 		// create rings
 		// ********************************************
 
-		for (int ring = 0; ring < rings; ring++) {
+		for (int ring = 0; ring < sections.Length - 1; ring++) {
+
+			Section segment = sections[ring];
 			
 			for (int i = 0; i < radialSegments; i++) {
 
@@ -74,8 +98,8 @@ public partial class Part2 : Node3D {
 				// a
 
 				createVertex(cosLag, sinLag, totalExtension); // a
-				createVertex(cosLead, sinLead, totalExtension - extension); // b
-				createVertex(cosLag, sinLag, totalExtension - extension); // c
+				createVertex(cosLead, sinLead, totalExtension - segment.extension); // b
+				createVertex(cosLag, sinLag, totalExtension - segment.extension); // c
 
 				//      f
 				//   /  |
@@ -83,19 +107,20 @@ public partial class Part2 : Node3D {
 
 				createVertex(cosLag, sinLag, totalExtension); // d
 				createVertex(cosLead, sinLead, totalExtension); // e
-				createVertex(cosLead, sinLead, totalExtension - extension); // f
+				createVertex(cosLead, sinLead, totalExtension - segment.extension); // f
 				
 				
 			}
 			// decrement totalExtension
-			totalExtension -= extension;
+			totalExtension -= segment.extension;
 		}
 
 		// ********************************************
-		// create rear faces
+		// create rear cap
 		// ********************************************
 
 		for (int i = 0; i < radialSegments; i++) {
+			createVertex(0, 0, totalExtension - sections[sections.Length - 1].extension);
 			createVertex(
 				Mathf.Cos(angle * i) * radius, 
 				Mathf.Sin(angle * i) * radius, 
@@ -106,7 +131,6 @@ public partial class Part2 : Node3D {
 				Mathf.Sin(angle * (i + 1)) * radius, 
 				totalExtension
 			);
-			createVertex(0, 0, totalExtension - extension);
 		}
 
 
