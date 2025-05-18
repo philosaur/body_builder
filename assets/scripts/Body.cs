@@ -4,10 +4,10 @@ using System.Collections.Generic;
 public partial class Body : Node3D
 {
     [Export] public float CrossSectionRadius = 0.5f;
-    [Export] public int CrossSectionPointCount = 5;
-    [Export] public int CrossSectionCount = 9;
-    [Export] public Vector3 BaseScale = new Vector3(0.5f, 0.8f, 0.5f);
-    [Export] public Vector3 Size = new Vector3(3.0f, 4.0f, 6.0f);
+    [Export] public int CrossSectionPointCount = 12;
+    [Export] public int CrossSectionCount = 6;
+    [Export] public Vector3 BaseScale = new Vector3(0.5f, 0.5f, 0.5f);
+    [Export] public Vector3 Size = new Vector3(3.0f, 3.0f, 3.0f);
     [Export] public Color AlbedoColor = new Color(1f, 1f, 1f);
     [Export] public float Roughness = .75f;
     [Export] public float Metallic = 0.4f;
@@ -24,8 +24,7 @@ public partial class Body : Node3D
         RegenerateGeometry();
     }
 
-    public void RegenerateGeometry()
-    {
+    public void RegenerateGeometry() {
         GenerateCrossSectionScales();
         GenerateCrossSection();
         GenerateSkin();
@@ -40,7 +39,7 @@ public partial class Body : Node3D
         {
             float t = i * step;
             float scale = Mathf.Sin(t * Mathf.Pi); // Smooth transition from 0 to 1 and back
-            _crossSectionScales[i] = BaseScale * scale;
+            _crossSectionScales[i] = BaseScale * (scale + 0.3f);
         }
     }
 
@@ -50,13 +49,15 @@ public partial class Body : Node3D
         _crossSectionPoints = new List<Vector3>();
 
         float angleStep = 2.0f * Mathf.Pi / CrossSectionPointCount;
+        float offset = CrossSectionPointCount % 2 == 0 ? angleStep / 2 : 0; // Add offset for even number of points
         
         // Generate points around the primary anchor
         for (int i = 0; i < CrossSectionPointCount; i++)
         {
-            float angle = i * angleStep - Mathf.Pi / 2.0f; // Start from top (90 degrees)
-            float x = Mathf.Cos(angle) * CrossSectionRadius;
-            float y = Mathf.Sin(angle) * CrossSectionRadius;
+            float angle = i * angleStep - Mathf.Pi / 2.0f + offset; // Start from top (90 degrees)
+			var radius = CrossSectionRadius * ((i - 1) % 3 == 0 ? 0.5f : 1.0f);
+            float x = Mathf.Cos(angle) * radius;
+            float y = Mathf.Sin(angle) * radius;
             _crossSectionPoints.Add(new Vector3(x, y, 0));
         }
     }
@@ -102,11 +103,60 @@ public partial class Body : Node3D
             }
         }
 
+        // Calculate and set proper normals for front and rear faces
+        // Front face normal calculation
+        Vector3 frontCenter = Vector3.Zero;
+        for (int i = 0; i < CrossSectionPointCount; i++)
+        {
+            frontCenter += vertices[sectionStartIndices[0] + i];
+        }
+        frontCenter /= CrossSectionPointCount;
+        
+        // Calculate front face normal using first three vertices
+        Vector3 frontNormal = Vector3.Zero;
+        for (int i = 0; i < CrossSectionPointCount - 2; i++)
+        {
+            Vector3 v1 = vertices[sectionStartIndices[0] + i + 1] - vertices[sectionStartIndices[0]];
+            Vector3 v2 = vertices[sectionStartIndices[0] + i + 2] - vertices[sectionStartIndices[0]];
+            frontNormal += v1.Cross(v2).Normalized();
+        }
+        frontNormal = frontNormal.Normalized();
+
+        // Set front face normals
+        for (int i = 0; i < CrossSectionPointCount; i++)
+        {
+            normals[sectionStartIndices[0] + i] = frontNormal;
+        }
+
+        // Rear face normal calculation
+        Vector3 backCenter = Vector3.Zero;
+        for (int i = 0; i < CrossSectionPointCount; i++)
+        {
+            backCenter += vertices[sectionStartIndices[sectionStartIndices.Length - 1] + i];
+        }
+        backCenter /= CrossSectionPointCount;
+
+        // Calculate rear face normal using first three vertices
+        Vector3 backNormal = Vector3.Zero;
+        for (int i = 0; i < CrossSectionPointCount - 2; i++)
+        {
+            Vector3 v1 = vertices[sectionStartIndices[sectionStartIndices.Length - 1] + i + 1] - vertices[sectionStartIndices[sectionStartIndices.Length - 1]];
+            Vector3 v2 = vertices[sectionStartIndices[sectionStartIndices.Length - 1] + i + 2] - vertices[sectionStartIndices[sectionStartIndices.Length - 1]];
+            backNormal += v1.Cross(v2).Normalized();
+        }
+        backNormal = backNormal.Normalized();
+
+        // Set rear face normals
+        for (int i = 0; i < CrossSectionPointCount; i++)
+        {
+            normals[sectionStartIndices[sectionStartIndices.Length - 1] + i] = backNormal;
+        }
+
         // Generate triangles for front face (clockwise winding when looking from outside)
         for (int i = 0; i < CrossSectionPointCount - 2; i++)
         {
-            indices.Add(sectionStartIndices[0] + i + 2);
             indices.Add(sectionStartIndices[0] + i + 1);
+            indices.Add(sectionStartIndices[0] + i + 2);
             indices.Add(sectionStartIndices[0]);
         }
 
@@ -114,9 +164,10 @@ public partial class Body : Node3D
         int backStartIndex = sectionStartIndices[sectionStartIndices.Length - 1];
         for (int i = 0; i < CrossSectionPointCount - 2; i++)
         {
+			indices.Add(backStartIndex + i + 0);
             indices.Add(backStartIndex + i + 1);
             indices.Add(backStartIndex + i + 2);
-            indices.Add(backStartIndex);
+            
         }
 
         // Generate triangles for sides between each cross-section

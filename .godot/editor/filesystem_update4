@@ -3,3 +3,5 @@ res://assets/scripts/OrbitCamera.cs
 res://assets/scenes/main.tscn
 res://assets/scripts/Body.cs
 res://assets/scripts/UIController.cs
+res://assets/scripts/Part.cs
+res://assets/scripts/Part2.cs

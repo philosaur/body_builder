@@ -1,15 +1,20 @@
-[gd_scene load_steps=5 format=3 uid="uid://de14l1f4uoas2"]
+[gd_scene load_steps=7 format=3 uid="uid://de14l1f4uoas2"]
 
 [ext_resource type="Script" path="res://assets/scripts/OrbitCamera.cs" id="1_17aat"]
-[ext_resource type="Script" path="res://assets/scripts/Body.cs" id="2_q4o7e"]
+[ext_resource type="Script" path="res://assets/scripts/Part2.cs" id="2_xgweg"]
 [ext_resource type="Script" path="res://assets/scripts/UIController.cs" id="3_8k4m2"]
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_70iu5"]
-top_radius = 1.0
-bottom_radius = 1.0
+[sub_resource type="CylinderMesh" id="CylinderMesh_igbb8"]
+top_radius = 2.0
+bottom_radius = 2.0
 height = 0.05
 radial_segments = 6
 rings = 1
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xaswj"]
+albedo_color = Color(0.470076, 0.470076, 0.470076, 1)
+
+[sub_resource type="PrismMesh" id="PrismMesh_ac4mo"]
 
 [node name="Main" type="Node3D"]
 
@@ -19,14 +24,10 @@ script = ExtResource("1_17aat")
 Target = NodePath("../body_root")
 
 [node name="body_root" type="Node3D" parent="."]
-script = ExtResource("2_q4o7e")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.18696e-05, 0)
-visible = false
-mesh = SubResource("CylinderMesh_70iu5")
+script = ExtResource("2_xgweg")
 
 [node name="UI" type="Control" parent="."]
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -117,3 +118,11 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.43852, -3.2068, 6.14243)
 light_color = Color(0.858824, 0.882353, 0.984314, 1)
 light_energy = 1.376
 omni_range = 10.1094
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_igbb8")
+surface_material_override/0 = SubResource("StandardMaterial3D_xaswj")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="MeshInstance3D"]
+transform = Transform3D(0.295, 0, 0, 0, 0.295, 0, 0, 0, 0.295, 0, 0.0530449, 1.91762)
+mesh = SubResource("PrismMesh_ac4mo")
