@@ -32,4 +32,5 @@ script = ExtResource("2_q4o7e")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.18696e-05, 0)
+visible = false
 mesh = SubResource("CylinderMesh_70iu5")
