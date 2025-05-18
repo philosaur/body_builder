@@ -57,41 +57,34 @@ public partial class Part2 : Node3D {
 		// ********************************************
 
 		for (int ring = 0; ring < rings; ring++) {
-			// decrement totalExtension
-			//totalExtension -= extension;
+			
 			for (int i = 0; i < radialSegments; i++) {
-				createVertex(
-					Mathf.Cos(angle * i) * radius, 
-					Mathf.Sin(angle * i) * radius, 
-					totalExtension
-				);
-				createVertex(
-					Mathf.Cos(angle * (i + 1)) * radius, 
-					Mathf.Sin(angle * (i + 1)) * radius, 
-					totalExtension - extension
-				);
-				createVertex(
-					Mathf.Cos(angle * i) * radius, 
-					Mathf.Sin(angle * i) * radius, 
-					totalExtension - extension
-				);
-				
 
-				createVertex(
-					Mathf.Cos(angle * i) * radius, 
-					Mathf.Sin(angle * i) * radius, 
-					totalExtension
-				);
-				createVertex(
-					Mathf.Cos(angle * (i + 1)) * radius, 
-					Mathf.Sin(angle * (i + 1)) * radius, 
-					totalExtension
-				);
-				createVertex(
-					Mathf.Cos(angle * (i + 1)) * radius, 
-					Mathf.Sin(angle * (i + 1)) * radius, 
-					totalExtension - extension
-				);
+				float lagAngle = angle * i;
+				float leadAngle = angle * (i + 1);
+				float cosLag = Mathf.Cos(lagAngle) * radius;
+				float sinLag = Mathf.Sin(lagAngle) * radius;
+				float cosLead = Mathf.Cos(leadAngle) * radius;
+				float sinLead = Mathf.Sin(leadAngle) * radius;
+
+				// create a quad for each radial segment composed of 2 triangles
+
+				// c <- b
+				// |  /
+				// a
+
+				createVertex(cosLag, sinLag, totalExtension); // a
+				createVertex(cosLead, sinLead, totalExtension - extension); // b
+				createVertex(cosLag, sinLag, totalExtension - extension); // c
+
+				//      f
+				//   /  |
+				// d -> e
+
+				createVertex(cosLag, sinLag, totalExtension); // d
+				createVertex(cosLead, sinLead, totalExtension); // e
+				createVertex(cosLead, sinLead, totalExtension - extension); // f
+				
 				
 			}
 			// decrement totalExtension
