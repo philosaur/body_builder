@@ -1,0 +1,4 @@
+res://scenes/main.tscn
+res://assets/scripts/OrbitCamera.cs
+res://assets/scenes/main.tscn
+res://assets/scripts/Body.cs

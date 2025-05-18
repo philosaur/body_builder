@@ -1,0 +1,35 @@
+[gd_scene load_steps=4 format=3 uid="uid://de14l1f4uoas2"]
+
+[ext_resource type="Script" path="res://assets/scripts/OrbitCamera.cs" id="1_17aat"]
+[ext_resource type="Script" path="res://assets/scripts/Body.cs" id="2_q4o7e"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_70iu5"]
+top_radius = 1.0
+bottom_radius = 1.0
+height = 0.05
+radial_segments = 6
+rings = 1
+
+[node name="Main" type="Node3D"]
+
+[node name="Camera3D" type="Camera3D" parent="." node_paths=PackedStringArray("Target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
+script = ExtResource("1_17aat")
+Target = NodePath("../body_root")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.91046, 0.413597, 0, -0.413597, 0.91046, 0, 10.0131, 14.5488)
+light_color = Color(0.972549, 0.843137, 0.788235, 1)
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.21787, -1.62, -6.5)
+light_color = Color(0.843715, 0.906461, 0.901974, 1)
+light_energy = 3.795
+omni_range = 9.9054
+
+[node name="body_root" type="Node3D" parent="."]
+script = ExtResource("2_q4o7e")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.18696e-05, 0)
+mesh = SubResource("CylinderMesh_70iu5")

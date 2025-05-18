@@ -1,0 +1,6 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+This code will be written C# for Godot 4 (Godot v4.3 stable mono win64 version). Please remember that Godot 4 Vectors (and likely other classes that use coordinates) use capital letters for coordinate member names (X, Y, Z).
