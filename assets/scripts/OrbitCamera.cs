@@ -18,7 +18,7 @@ public partial class OrbitCamera : Camera3D
         if (Target != null) {
             Vector3 offset = GlobalTransform.Origin - Target.GlobalTransform.Origin;
             Distance = offset.Length();
-            _yaw = Mathf.RadToDeg(Mathf.Atan2(offset.X, offset.Z)) + 180.0f;
+            _yaw = Mathf.RadToDeg(Mathf.Atan2(offset.X, offset.Z)); // + 180.0f;
             _pitch = Mathf.RadToDeg(Mathf.Asin(offset.Y / Distance));
         }
     }

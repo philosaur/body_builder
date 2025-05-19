@@ -59,6 +59,8 @@ public partial class Part2 : Node3D {
 		currentExtension = createRings(angle, currentExtension);
 		currentExtension =createRearCap(angle, currentExtension);
 
+		
+
 		st.Index();
 		st.Deindex();
 		st.GenerateNormals();
@@ -75,7 +77,9 @@ public partial class Part2 : Node3D {
 		// Apply mesh and material
 		_meshInstance.Mesh = mesh;
 		_meshInstance.MaterialOverride = material;
-		
+		// move the mesh forward by half the currentExtension
+		_meshInstance.Translate(new Vector3(0, 0, -currentExtension / 2));
+
 		// Create normal debug visualization
 		// CreateNormalDebugVisualization(mesh);
 	}
@@ -93,38 +97,37 @@ public partial class Part2 : Node3D {
 		for (int i = 0; i < radialSegments; i++) {
 			createVertex(0, 0, 0);
 			createVertex(
-				Mathf.Cos(angle * (i + 1)) * sections[0].xScale, 
-				Mathf.Sin(angle * (i + 1)) * sections[0].yScale, 
-				-sections[0].extension
-			);
-			createVertex(
 				Mathf.Cos(angle * i) * sections[0].xScale, 
 				Mathf.Sin(angle * i) * sections[0].yScale, 
-				-sections[0].extension
+				sections[0].extension
+			);
+			createVertex(
+				Mathf.Cos(angle * (i + 1)) * sections[0].xScale, 
+				Mathf.Sin(angle * (i + 1)) * sections[0].yScale, 
+				sections[0].extension
 			);
 		}
-		currentExtension -= sections[0].extension;
-		return currentExtension;
+		return currentExtension + sections[0].extension;
 	}
 
-	private float createRearCap(float angle, float totalExtension) {
+	private float createRearCap(float angle, float currentExtension) {
 		for (int i = 0; i < radialSegments; i++) {
-			createVertex(0, 0, totalExtension - sections[sections.Length - 1].extension);
-			createVertex(
-				Mathf.Cos(angle * i) * sections[sections.Length - 1].xScale, 
-				Mathf.Sin(angle * i) * sections[sections.Length - 1].yScale, 
-				totalExtension
-			);
+			createVertex(0, 0, currentExtension + sections[sections.Length - 1].extension);
 			createVertex(
 				Mathf.Cos(angle * (i + 1)) * sections[sections.Length - 1].xScale, 
 				Mathf.Sin(angle * (i + 1)) * sections[sections.Length - 1].yScale, 
-				totalExtension
+				currentExtension
+			);
+			createVertex(
+				Mathf.Cos(angle * i) * sections[sections.Length - 1].xScale, 
+				Mathf.Sin(angle * i) * sections[sections.Length - 1].yScale, 
+				currentExtension
 			);
 		}
-		return totalExtension - sections[sections.Length - 1].extension;
+		return currentExtension + sections[sections.Length - 1].extension;
 	}
 
-	private float createRings(float angle, float totalExtension) {
+	private float createRings(float angle, float currentExtension) {
 		for (int ring = 0; ring < sections.Length - 1; ring++) {
 
 			Section frontSegment = sections[ring];
@@ -141,12 +144,12 @@ public partial class Part2 : Node3D {
 				float rightX = Mathf.Cos(rightAngle);
 				float rightY = Mathf.Sin(rightAngle);
 
-				float frontExtension = totalExtension;
-				float rearExtension = totalExtension - frontSegment.extension;
+				float frontExtension = currentExtension;
+				float rearExtension = currentExtension + frontSegment.extension;
 
 				// create a quad for each radial segment composed of 2 triangles
 
-				// c <- b	-- rear extension
+				// b -> c	-- rear extension
 				// |  /
 				// a		-- front extension
 
@@ -156,19 +159,19 @@ public partial class Part2 : Node3D {
 					frontExtension
 				);
 				createVertex( // b
-					rightX * rearSegment.xScale, 
-					rightY * rearSegment.yScale, 
-					rearExtension
-				);
-				createVertex( // c
 					leftX * rearSegment.xScale, 
 					leftY * rearSegment.yScale, 
 					rearExtension
 				);
+				createVertex( // c
+					rightX * rearSegment.xScale, 
+					rightY * rearSegment.yScale, 
+					rearExtension
+				);
 
-				//      f	-- rear extension
+				//      e	-- rear extension
 				//   /  |
-				// d -> e	-- front extension
+				// d <- f	-- front extension
 
 				createVertex( // d
 					leftX * frontSegment.xScale, 
@@ -176,20 +179,20 @@ public partial class Part2 : Node3D {
 					frontExtension
 				);
 				createVertex( // e
-					rightX * frontSegment.xScale, 
-					rightY * frontSegment.yScale, 
-					frontExtension
-				);
-				createVertex( // f
 					rightX * rearSegment.xScale, 
 					rightY * rearSegment.yScale, 
 					rearExtension
 				);
+				createVertex( // f
+					rightX * frontSegment.xScale, 
+					rightY * frontSegment.yScale, 
+					frontExtension
+				);
 			}
 			// decrement totalExtension
-			totalExtension -= frontSegment.extension;
+			currentExtension += frontSegment.extension;
 		}
-		return totalExtension;
+		return currentExtension;
 	}
 
 	private void CreateNormalDebugVisualization(ArrayMesh mesh) {
