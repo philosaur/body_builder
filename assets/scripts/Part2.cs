@@ -18,17 +18,27 @@ public struct Section {
 public partial class Part2 : Node3D {
 	
 	[Export] public int radialSegments = 6;
-	[Export] public int rings = 3;
     [Export] public Color AlbedoColor = new Color(1f, 1f, 1f);
-    [Export] public float Roughness = .75f;
-    [Export] public float Metallic = 0.4f;
+    [Export] public float Roughness = 0.2f;
+    [Export] public float Metallic = 0.2f;
     [Export] public float NormalDebugLength = 0.2f; // Length of normal debug lines
 
 	public Section[] sections = new Section[] {
-		new Section(1, 1, 0.50f),
-		new Section(1, 1, 0.50f),
-		new Section(1, 1, 0.50f),
-		new Section(1, 1, 0.50f)
+		new Section(0.20f, 0.10f, 0.10f),
+		new Section(0.25f, 0.20f, 0.30f),
+		new Section(0.30f, 0.30f, 0.30f),
+		new Section(0.35f, 0.40f, 0.30f),
+		new Section(0.40f, 0.50f, 0.30f),
+		new Section(0.43f, 0.50f, 0.30f),
+		new Section(0.46f, 0.50f, 0.30f),
+		new Section(0.50f, 0.90f, 0.30f),
+		new Section(0.50f, 0.90f, 0.30f),
+		new Section(0.50f, 0.50f, 0.30f),
+		new Section(0.50f, 0.50f, 0.30f),
+		new Section(0.40f, 0.90f, 0.30f),
+		new Section(0.40f, 0.90f, 0.30f),
+		new Section(0.30f, 0.50f, 0.20f),
+		new Section(0.20f, 0.40f, 0.10f)
 	};
     
     private MeshInstance3D _meshInstance;
@@ -42,101 +52,15 @@ public partial class Part2 : Node3D {
 		st = new SurfaceTool();
 		st.Begin(Mesh.PrimitiveType.Triangles);
 
-
-
-
-
-		// create angle array
-		float[] angles = new float[radialSegments];
-		for (int i = 0; i < radialSegments; i++) {
-			angles[i] = Mathf.Pi * 2 / radialSegments * i;
-		}		
 		float angle = Mathf.Pi * 2 / radialSegments;
-		float radius = 1f;
-		float totalExtension = 0;
+		float currentExtension = 0;
 
-		// ********************************************
-		// create front cap
-		// ********************************************		
-		for (int i = 0; i < radialSegments; i++) {
-			createVertex(0, 0, 0);
-			createVertex(
-				Mathf.Cos(angle * (i + 1)) * sections[0].xScale, 
-				Mathf.Sin(angle * (i + 1)) * sections[0].yScale, 
-				-sections[0].extension
-			);
-			createVertex(
-				Mathf.Cos(angle * i) * sections[0].xScale, 
-				Mathf.Sin(angle * i) * sections[0].yScale, 
-				-sections[0].extension
-			);
-		}
-		totalExtension -= sections[0].extension;
-
-
-		// ********************************************
-		// create rings
-		// ********************************************
-
-		for (int ring = 0; ring < sections.Length - 1; ring++) {
-
-			Section segment = sections[ring];
-			
-			for (int i = 0; i < radialSegments; i++) {
-
-				float lagAngle = angle * i;
-				float leadAngle = angle * (i + 1);
-				float cosLag = Mathf.Cos(lagAngle) * radius;
-				float sinLag = Mathf.Sin(lagAngle) * radius;
-				float cosLead = Mathf.Cos(leadAngle) * radius;
-				float sinLead = Mathf.Sin(leadAngle) * radius;
-
-				// create a quad for each radial segment composed of 2 triangles
-
-				// c <- b
-				// |  /
-				// a
-
-				createVertex(cosLag, sinLag, totalExtension); // a
-				createVertex(cosLead, sinLead, totalExtension - segment.extension); // b
-				createVertex(cosLag, sinLag, totalExtension - segment.extension); // c
-
-				//      f
-				//   /  |
-				// d -> e
-
-				createVertex(cosLag, sinLag, totalExtension); // d
-				createVertex(cosLead, sinLead, totalExtension); // e
-				createVertex(cosLead, sinLead, totalExtension - segment.extension); // f
-				
-				
-			}
-			// decrement totalExtension
-			totalExtension -= segment.extension;
-		}
-
-		// ********************************************
-		// create rear cap
-		// ********************************************
-
-		for (int i = 0; i < radialSegments; i++) {
-			createVertex(0, 0, totalExtension - sections[sections.Length - 1].extension);
-			createVertex(
-				Mathf.Cos(angle * i) * radius, 
-				Mathf.Sin(angle * i) * radius, 
-				totalExtension
-			);
-			createVertex(
-				Mathf.Cos(angle * (i + 1)) * radius, 
-				Mathf.Sin(angle * (i + 1)) * radius, 
-				totalExtension
-			);
-		}
-
-
-
+		currentExtension = createFrontCap(angle, currentExtension);		
+		currentExtension = createRings(angle, currentExtension);
+		currentExtension =createRearCap(angle, currentExtension);
 
 		st.Index();
+		st.Deindex();
 		st.GenerateNormals();
 		st.GenerateTangents();
 		ArrayMesh mesh = st.Commit();
@@ -153,11 +77,119 @@ public partial class Part2 : Node3D {
 		_meshInstance.MaterialOverride = material;
 		
 		// Create normal debug visualization
-		CreateNormalDebugVisualization(mesh);
-		
-		// Add debug visualization
-		// GD.Print($"Mesh created with {vertices.Count} vertices and {indices.Count/3} triangles");
-		GD.Print($"Mesh bounds: {mesh.GetAabb()}");
+		// CreateNormalDebugVisualization(mesh);
+	}
+
+	private void createVertex(float x, float y, float z) {
+		st.SetColor(AlbedoColor);
+		st.SetUV(new Vector2(0, 0));
+		st.AddVertex(new Vector3(x, y, z));
+	}
+
+	private float createFrontCap(float angle, float currentExtension) {
+		// ********************************************
+		// create front cap
+		// ********************************************		
+		for (int i = 0; i < radialSegments; i++) {
+			createVertex(0, 0, 0);
+			createVertex(
+				Mathf.Cos(angle * (i + 1)) * sections[0].xScale, 
+				Mathf.Sin(angle * (i + 1)) * sections[0].yScale, 
+				-sections[0].extension
+			);
+			createVertex(
+				Mathf.Cos(angle * i) * sections[0].xScale, 
+				Mathf.Sin(angle * i) * sections[0].yScale, 
+				-sections[0].extension
+			);
+		}
+		currentExtension -= sections[0].extension;
+		return currentExtension;
+	}
+
+	private float createRearCap(float angle, float totalExtension) {
+		for (int i = 0; i < radialSegments; i++) {
+			createVertex(0, 0, totalExtension - sections[sections.Length - 1].extension);
+			createVertex(
+				Mathf.Cos(angle * i) * sections[sections.Length - 1].xScale, 
+				Mathf.Sin(angle * i) * sections[sections.Length - 1].yScale, 
+				totalExtension
+			);
+			createVertex(
+				Mathf.Cos(angle * (i + 1)) * sections[sections.Length - 1].xScale, 
+				Mathf.Sin(angle * (i + 1)) * sections[sections.Length - 1].yScale, 
+				totalExtension
+			);
+		}
+		return totalExtension - sections[sections.Length - 1].extension;
+	}
+
+	private float createRings(float angle, float totalExtension) {
+		for (int ring = 0; ring < sections.Length - 1; ring++) {
+
+			Section frontSegment = sections[ring];
+			Section rearSegment = sections[ring + 1];
+			
+			for (int i = 0; i < radialSegments; i++) {
+
+				float leftAngle = angle * i;
+				float rightAngle = angle * (i + 1);
+
+				float leftX = Mathf.Cos(leftAngle);
+				float leftY = Mathf.Sin(leftAngle);
+
+				float rightX = Mathf.Cos(rightAngle);
+				float rightY = Mathf.Sin(rightAngle);
+
+				float frontExtension = totalExtension;
+				float rearExtension = totalExtension - frontSegment.extension;
+
+				// create a quad for each radial segment composed of 2 triangles
+
+				// c <- b	-- rear extension
+				// |  /
+				// a		-- front extension
+
+				createVertex( // a
+					leftX * frontSegment.xScale, 
+					leftY * frontSegment.yScale, 
+					frontExtension
+				);
+				createVertex( // b
+					rightX * rearSegment.xScale, 
+					rightY * rearSegment.yScale, 
+					rearExtension
+				);
+				createVertex( // c
+					leftX * rearSegment.xScale, 
+					leftY * rearSegment.yScale, 
+					rearExtension
+				);
+
+				//      f	-- rear extension
+				//   /  |
+				// d -> e	-- front extension
+
+				createVertex( // d
+					leftX * frontSegment.xScale, 
+					leftY * frontSegment.yScale, 
+					frontExtension
+				);
+				createVertex( // e
+					rightX * frontSegment.xScale, 
+					rightY * frontSegment.yScale, 
+					frontExtension
+				);
+				createVertex( // f
+					rightX * rearSegment.xScale, 
+					rightY * rearSegment.yScale, 
+					rearExtension
+				);
+			}
+			// decrement totalExtension
+			totalExtension -= frontSegment.extension;
+		}
+		return totalExtension;
 	}
 
 	private void CreateNormalDebugVisualization(ArrayMesh mesh) {
@@ -191,10 +223,6 @@ public partial class Part2 : Node3D {
 		_normalDebugMesh.MaterialOverride = debugMaterial;
 	}
 
-	private void createVertex(float x, float y, float z) {
-		st.SetColor(AlbedoColor);
-		st.SetUV(new Vector2(0, 0));
-		st.AddVertex(new Vector3(x, y, z));
-	}
+	
 
 }
